@@ -26,7 +26,7 @@ function createVolunteers(target, meta) {
   fig.classList.add('info');
   target.append(fig);
   const viz = chrome.runtime.getURL('src/i/hiviz.svg');
-  fig.innerHTML = `<img alt="A hi-viz vest" src="${viz}"><p>${meta.volunteers.count} Hi-Viz<br>Heroes</p>`;
+  fig.innerHTML = `<img alt="A hi-viz vest" src="${viz}"><p>${meta.volunteers.count} Volunteers</p>`;
 }
 
 
