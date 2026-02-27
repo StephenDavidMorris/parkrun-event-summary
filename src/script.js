@@ -481,18 +481,6 @@ function start() {
     color: '#FFFFFF',
   });
 
-  const url = String(window.location.href);
-
-  const isLatestResultsPage = url.includes('/latestresults');
-  const isDateResultsPage = /\/results\/\d{4}-\d{2}-\d{2}\//.test(url);
-  const isPreviousResultsPage = /\/results\/\d+\//.test(url);
-  const isResultsPage = isLatestResultsPage || isDateResultsPage || isPreviousResultsPage;
-
-
-  if (!isResultsPage) {
-    return;
-  }
-
   const finishers = extractFinishers();
   const meta = extractMeta(finishers);
   meta.volunteers = extractVolunteers();
@@ -500,8 +488,20 @@ function start() {
   generateInfographic(meta);
 }
 
+function isValidResultsPage() {
+  const url = String(window.location.href);
+
+  const isLatestResultsPage = url.includes('/latestresults');
+  const isDateResultsPage = /\/results\/\d{4}-\d{2}-\d{2}\//.test(url);
+  const isPreviousResultsPage = /\/results\/\d+\//.test(url);
+  const isResultsPage = isLatestResultsPage || isDateResultsPage || isPreviousResultsPage;
+
+  return isResultsPage;
+}
 
 function delayedStart() {
+  if (!isValidResultsPage()) { return; }
+
   if (document.title.includes('Human')) {
     // try and get a handle on the results header so we can
     // add a loading message
