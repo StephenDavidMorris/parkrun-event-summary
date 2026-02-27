@@ -1,6 +1,6 @@
 {
-  "name": "parkruneventsummary",
-  "version": "1.0.3",
+  "name": "parkruneventsummaryjuniorcompatible",
+  "version": "2.0.0",
   "description": "A tool for Run Directors or interested third parties to generate a nice infographic for sharing.",
   "main": "script.js",
   "type": "module",
@@ -8,7 +8,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "rm pes.xpi;zip -u -8 -v -r pes.zip manifest.json src i;cp pes.zip pes.xpi;"
   },
-  "author": "Rich Boakes <rich@boakes.org>",
+  "author": "Originally by Rich Boakes <rich@boakes.org>, version 2.0 maintained by Steve Morris <stephen_d_morris@outlook.com>",
   "license": "ISC",
   "devDependencies": {
     "eslint": "^8.54.0",

@@ -26,7 +26,7 @@ function createVolunteers(target, meta) {
   fig.classList.add('info');
   target.append(fig);
   const viz = chrome.runtime.getURL('src/i/hiviz.svg');
-  fig.innerHTML = `<img alt="A hi-viz vest" src="${viz}"><p>${meta.volunteers.count} Volunteers</p>`;
+  fig.innerHTML = `<img alt="A hi-viz vest" src="${viz}"><p>Thank you to our ${meta.volunteers.count} volunteers who made the event possible!</p>`;
 }
 
 
@@ -284,13 +284,13 @@ function createInfographicElement() {
   if (header) {
     infographic = document.createElement('div');
     infographic.id = 'infographic';
-    infographic.innerHTML = '<code>Preparing Charts...</code>';
+    infographic.innerHTML = '<code>Preparing Charts....</code>';
     header.before(infographic);
 
-    let p = document.createElement('p');
-    p.id = 'linkToChromeExtension';
-    p.innerHTML = 'Infographic made with the <a href="https://chromewebstore.google.com/detail/parkrun-event-summary/nfdbgfodockojbhmenjohphggbokgmaf">parkrun Event Summary</a> Chrome extension.';
-    header.before(p);
+    // let p = document.createElement('p');
+    // p.id = 'linkToChromeExtension';
+    // p.innerHTML = 'Infographic made with the <a href="https://chromewebstore.google.com/detail/parkrun-event-summary/nfdbgfodockojbhmenjohphggbokgmaf">parkrun Event Summary</a> Chrome extension.';
+    // header.before(p);
   }
 
   return infographic;
@@ -461,8 +461,7 @@ function extractMeta(finishers) {
     totalVols += vol;
   }
   meta.totalVols = totalVols;
-  console.log(meta);
-
+  
   return meta;
 }
 
@@ -485,8 +484,10 @@ function start() {
   const url = String(window.location.href);
 
   const isLatestResultsPage = url.includes('/latestresults');
+  const isDateResultsPage = /\/results\/\d{4}-\d{2}-\d{2}\//.test(url);
   const isPreviousResultsPage = /\/results\/\d+\//.test(url);
-  const isResultsPage = isLatestResultsPage || isPreviousResultsPage;
+  const isResultsPage = isLatestResultsPage || isDateResultsPage || isPreviousResultsPage;
+
 
   if (!isResultsPage) {
     return;
@@ -529,6 +530,5 @@ function addLegendToKey(key, data) {
 function isForJuniors() {
   return window.location.href.includes('-juniors/');
 }
-
 
 window.onload = delayedStart;
