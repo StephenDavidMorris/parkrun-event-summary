@@ -268,7 +268,7 @@ function extractFinisherRow(row) {
     result.position = row.dataset.position;
     result.runs = row.dataset.runs;
     result.vols = row.dataset.vols;
-    result.ageGrade = row.dataset.agegrade;
+    result.ageGrade = row.dataset.agegrade ? parseFloat(row.dataset.agegrade) : undefined;
     result.achievement = row.dataset.achievement;
   }
 
