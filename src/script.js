@@ -6,6 +6,7 @@ const firstEverColour = '#8e5ea2';
 const firstTimeHereColour = '#e21145';
 const beenBeforeColour = '#00ADEF';
 
+const milestoneOne ='#8e5ea2';
 const milestoneTen ='#ffffffb6';
 const milestoneTwentyFive = '#523585';
 const milestoneFifty = '#C92E2E';
@@ -26,7 +27,7 @@ function createVolunteers(target, meta) {
   fig.classList.add('info');
   target.append(fig);
   const viz = chrome.runtime.getURL('src/i/hiviz.svg');
-  fig.innerHTML = `<img alt="A hi-viz vest" src="${viz}"><p>Thank you to our ${meta.volunteers.count} volunteers who made the event possible!</p>`;
+  fig.innerHTML = `<img alt="A hi-viz vest" src="${viz}"><p>Thank you to our ${meta.volunteerMeta.totalVols} volunteers who made the event possible!</p>`;
 }
 
 
@@ -52,7 +53,6 @@ function createAges(target, meta) {
     const ages = group.replace(/\D/g, '-').split('-').filter(Boolean);
     if(ages.length === 0) continue;
     const avgAge = (parseInt(ages[0]) + parseInt(ages[ages.length - 1])) / 2;
-    console.log(group, ages, avgAge);
     total += avgAge * meta.ageGroups[group];
     count += meta.ageGroups[group];
   }
@@ -77,23 +77,6 @@ function createTopAgeGrade(target, meta) {
   const gauge = chrome.runtime.getURL('src/i/gauge.svg');
 
   fig.innerHTML = `<img alt="A gauge" src="${gauge}"><p>Top Age<br>Grade: ${highestAgeGrade}%</p>`;
-}
-
-
-function createTotalDistance(target, meta) {
-  const fig = document.createElement('div');
-  const COURSE_DISTANCE = isForJuniors() ? 2 : 5;
-  fig.id = 'distance';
-  fig.classList.add('info');
-  target.append(fig);
-
-  const todaysDistance = meta.finishers.length * COURSE_DISTANCE;
-  const earthCircumference = 40075;
-  const earthLaps = Math.ceil(earthCircumference / todaysDistance);
-
-  const tape = chrome.runtime.getURL('src/i/earth.svg');
-
-  fig.innerHTML = `<img alt="A tape measure" src="${tape}"><p>Together we covered ${todaysDistance.toLocaleString()}km today.<br>Enough to complete a relay around the Earth in ${earthLaps} days!</p>`;
 }
 
 
@@ -164,6 +147,25 @@ function createMilestonesDonut(target, meta) {
           { label: '250', value: meta.milestones.official[250].length, color: milestoneTwoFifty },
           { label: '500', value: meta.milestones.official[500].length, color: milestoneFiveHundred },
           { label: '1K', value: meta.milestones.official[1000].length, color: milestoneThousand },
+        ],
+    borderColor: '#fff',
+  };
+  createDonut(target, config);
+}
+
+
+function createVolunteersDonut(target, meta) {
+  const config = {
+    id: 'dvolunteers',
+    message: `<h1>${meta.volunteerMeta.milestones.total}</h1><p style="text-align: center">Volunteer<br>milestones<br>achieved!</p>`,
+    raw : [
+          { label: 'First timer', value: meta.volunteerMeta.milestones[1].length, color: milestoneOne },
+          { label: '25', value: meta.volunteerMeta.milestones[25].length, color: milestoneTwentyFive },
+          { label: '50', value: meta.volunteerMeta.milestones[50].length, color: milestoneFifty },
+          { label: '100', value: meta.volunteerMeta.milestones[100].length, color: milestoneHundred },
+          { label: '250', value: meta.volunteerMeta.milestones[250].length, color: milestoneTwoFifty },
+          { label: '500', value: meta.volunteerMeta.milestones[500].length, color: milestoneFiveHundred },
+          { label: '1K', value: meta.volunteerMeta.milestones[1000].length, color: milestoneThousand },
         ],
     borderColor: '#fff',
   };
@@ -276,6 +278,33 @@ function extractFinisherRow(row) {
 }
 
 
+function extractVolunteers() {
+  const table = document.querySelector('table.Volunteers-table');
+  const rows = table.querySelectorAll('.Volunteers-table-row');
+  const volunteers = [];
+
+  for (const row of rows) {
+    const result = extractVolunteerRow(row);
+    if (result) volunteers.push(result);
+  }
+
+  return volunteers;
+}
+
+
+function extractVolunteerRow(row) {
+  const result = {};
+
+  // Extract data attributes
+  if (row.dataset.name) {
+    result.name = row.dataset.name;
+    result.volunteerCredits = row.dataset.volunteercredits;
+  }
+
+  return result;
+}
+
+
 function createInfographicElement() {
   let infographic = document.querySelector('#infographic');
   if (infographic) return;
@@ -341,14 +370,12 @@ function generateInfographic(meta) {
   createPBDonut(gcharts, meta);
   createFirstDonut(gcharts, meta);
   createMilestonesDonut(gcharts, meta);
+  createVolunteersDonut(gcharts, meta);
 
   const g1 = createGroup(gcharts, 'g1');
   createTopAgeGrade(g1, meta);
   createAges(g1, meta);
   createVolunteers(g1, meta);
-
-  const g2 = createGroup(gcharts, 'g1');
-  createTotalDistance(g2, meta);
 }
 
 
@@ -428,9 +455,6 @@ function extractMeta(finishers) {
     if (finisher.position) {
       meta.positions[finisher.position] = (meta.positions[finisher.position] ?? 0) + 1;
     }
-    if (finisher.vols) {
-      meta.vols[finisher.vols] = (meta.vols[finisher.vols] ?? 0) + 1;
-    }
     if (finisher.ageGrade) {
       meta.ageGrades[finisher.ageGrade] = (meta.ageGrades[finisher.ageGrade] ?? 0) + 1;
     }
@@ -455,23 +479,27 @@ function extractMeta(finishers) {
       }
     }
   }
-
-  let totalVols = '0';
-  for (const vol of Object.values(meta.vols)) {
-    totalVols += vol;
-  }
-  meta.totalVols = totalVols;
-  
+ 
   return meta;
 }
 
 
-function extractVolunteers() {
-  const volunteers = {};
-  const volunteerDiv = document.querySelector('div.Results + div p');
-  volunteers.count = volunteerDiv.querySelectorAll('a').length;
+function extractVolunteersMeta(volunteers) {
+  const meta = {};
+  meta.milestones = { 1: [], 25: [], 50: [], 100: [], 250: [], 500: [], 1000: [] };
+  meta.milestones.total = 0;
 
-  return volunteers;
+  for (const volunteer of volunteers) {
+    if (volunteer.volunteerCredits) {
+      if (meta.milestones[volunteer.volunteerCredits]) {
+        meta.milestones[volunteer.volunteerCredits].push(volunteer.name);
+        meta.milestones.total++;
+      }
+    }
+  }
+  meta.totalVols = volunteers.length;
+
+  return meta;
 }
 
 
@@ -483,10 +511,14 @@ function start() {
 
   const finishers = extractFinishers();
   const meta = extractMeta(finishers);
-  meta.volunteers = extractVolunteers();
+  const volunteers = extractVolunteers();
+  const volunteerMeta = extractVolunteersMeta(volunteers);
   meta.finishers = finishers;
+  meta.volunteers = volunteers;
+  meta.volunteerMeta = volunteerMeta;
   generateInfographic(meta);
 }
+
 
 function isValidResultsPage() {
   const url = String(window.location.href);
@@ -498,6 +530,7 @@ function isValidResultsPage() {
 
   return isResultsPage;
 }
+
 
 function delayedStart() {
   if (!isValidResultsPage()) { return; }
