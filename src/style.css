@@ -8,21 +8,7 @@
     --grey: #2A3436;
     --blue: #00ADEF;
     --blue2: #3E3E78;
-    --areas:
-        "header"
-        "date"
-        "gender"
-        "pb"
-        "firsttime"
-        "dmilestones"
-        "ages"
-        "agegrade"
-        "distance"
-        "volunteers";
-    --columns: 1fr;
-    --rows: auto;
     --width: 340px;
-
     --distanceFlex: column;
 } 
 
@@ -62,6 +48,23 @@
     margin-bottom: 1em;
 }
 
+.volunteer-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75em;
+  width: 100%;
+  font-size: 1.1em;
+  color: white;
+  padding: 0.5em 0;
+  margin-bottom: 0.5em;
+  border-top: 1px solid rgba(255,255,255,0.2);
+  border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.volunteer-banner img {
+  width: 1.75em;
+}
 
 #gcharts {
     width: 100%;

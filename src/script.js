@@ -21,13 +21,19 @@ const juniorMilestoneUltra = '#ffa300';
 const juniorMilestoneHundred = '#939393';
 const juniorMilestoneTwoFifty = '#ffdd00';
 
+const underTwentyColour = '#6FC24D';
+const twentyToThirtyNineColour = '#00ADEF';
+const fortyToFiftyNineColour = '#E5C500';
+const sixtyToSeventyNineColour = '#8e5ea2';
+const eightyPlusColour = '#99d6ea';
+
 function createVolunteers(target, meta) {
-  const fig = document.createElement('div');
-  fig.id = 'volunteers';
-  fig.classList.add('info');
-  target.append(fig);
   const viz = chrome.runtime.getURL('src/i/hiviz.svg');
-  fig.innerHTML = `<img alt="A hi-viz vest" src="${viz}"><p>Thank you to our ${meta.volunteerMeta.totalVols} volunteers who made the event possible!</p>`;
+  const div = document.createElement('div');
+  div.id = 'volunteers';
+  div.classList.add('volunteer-banner');
+  div.innerHTML = `<img alt="A hi-viz vest" src="${viz}"> Thank you to our ${meta.volunteerMeta.totalVols} volunteers who made this event possible!`;
+  target.append(div);
 }
 
 
@@ -37,46 +43,6 @@ function createGroup(target, id) {
   group.classList.add('group');
   target.append(group);
   return group;
-}
-
-
-function createAges(target, meta) {
-  const fig = document.createElement('div');
-  fig.id = 'ages';
-  fig.classList.add('info');
-  target.append(fig);
-
-  let total = 0;
-  let count = 0;
-
-  for (const group in meta.ageGroups) {
-    const ages = group.replace(/\D/g, '-').split('-').filter(Boolean);
-    if(ages.length === 0) continue;
-    const avgAge = (parseInt(ages[0]) + parseInt(ages[ages.length - 1])) / 2;
-    total += avgAge * meta.ageGroups[group];
-    count += meta.ageGroups[group];
-  }
-
-  const averageAge = Number(total / count).toFixed(0);
-  const cake = chrome.runtime.getURL('src/i/cake.svg');
-
-  fig.innerHTML = `<img alt="A birthday cake" src="${cake}"><p>Average<br>Age: ${averageAge}</p>`;
-}
-
-
-function createTopAgeGrade(target, meta) {
-  const fig = document.createElement('div');
-  fig.id = 'agegrade';
-  fig.classList.add('info');
-  target.append(fig);
-
-  // extract the highest age grade from the keys in meta.ageGrades
-  const ageGrades = Object.keys(meta.ageGrades);
-  const highestAgeGrade = Math.max(...ageGrades);
-
-  const gauge = chrome.runtime.getURL('src/i/gauge.svg');
-
-  fig.innerHTML = `<img alt="A gauge" src="${gauge}"><p>Top Age<br>Grade: ${highestAgeGrade}%</p>`;
 }
 
 
@@ -152,6 +118,12 @@ function createMilestonesDonut(target, meta) {
   };
   createDonut(target, config);
 }
+function addMilestonesMissingText(target) {
+  const milestoneText = document.createElement('p');
+  milestoneText.style.textAlign = 'center';
+  milestoneText.innerHTML = `Milestone data is not valid for past result pages<br />as the finishes count is always current.`;
+  target.append(milestoneText);
+}
 
 
 function createVolunteersDonut(target, meta) {
@@ -172,6 +144,36 @@ function createVolunteersDonut(target, meta) {
   createDonut(target, config);
 }
 
+
+function createAgeGroupDonut(target, meta) {
+  if (isForJuniors()) {
+    const config = {
+      id: 'dagegroup',
+      message: `<p style="text-align: center">Age range</p>`,
+      raw : [
+            { label: 'under 11', value: meta.ageGroup[10], color: firstEverColour },
+            { label: '11-14', value: meta.ageGroup[1114], color: fortyToFiftyNineColour },
+          ],
+      borderColor: '#fff',
+    };
+    createDonut(target, config);
+  }
+  else {
+    const config = {
+      id: 'dagegroup',
+      message: `<p style="text-align: center">Age range</p>`,
+      raw : [
+            { label: 'under 20', value: meta.ageGroup[10] + meta.ageGroup[1114] + meta.ageGroup[1517] + meta.ageGroup[1819], color: underTwentyColour },
+            { label: '20-39', value: meta.ageGroup[2024] + meta.ageGroup[2529] + meta.ageGroup[3034] + meta.ageGroup[3539], color: twentyToThirtyNineColour },
+            { label: '40-59', value: meta.ageGroup[4044] + meta.ageGroup[4549] + meta.ageGroup[5054] + meta.ageGroup[5559], color: fortyToFiftyNineColour },
+            { label: '60-79', value: meta.ageGroup[6064] + meta.ageGroup[6569] + meta.ageGroup[7074] + meta.ageGroup[7579], color: sixtyToSeventyNineColour },
+            { label: '80+', value: meta.ageGroup[8084] + meta.ageGroup[8589] + meta.ageGroup[9094] + meta.ageGroup[9599], color: eightyPlusColour },
+          ],
+      borderColor: '#fff',
+    };
+    createDonut(target, config);
+  }
+}
 
 function createDonut(target, config) {
   const fig = document.createElement('figure');
@@ -265,12 +267,8 @@ function extractFinisherRow(row) {
   if (row.dataset.name) {
     result.name = row.dataset.name;
     result.ageGroup = row.dataset.agegroup;
-    result.club = row.dataset.club;
     result.gender = row.dataset.gender;
-    result.position = row.dataset.position;
     result.runs = row.dataset.runs;
-    result.vols = row.dataset.vols;
-    result.ageGrade = row.dataset.agegrade ? parseFloat(row.dataset.agegrade) : undefined;
     result.achievement = row.dataset.achievement;
   }
 
@@ -364,18 +362,23 @@ function generateInfographic(meta) {
   const ghead = createGroup(infographic, 'ghead'); 
   createTitle(ghead);
   createDate(ghead);
-
+  createVolunteers(infographic, meta); // 👈 appended to infographic, between ghead and gcharts
   const gcharts = createGroup(infographic, 'gcharts'); 
+
   createGenderDonut(gcharts, meta);
   createPBDonut(gcharts, meta);
   createFirstDonut(gcharts, meta);
-  createMilestonesDonut(gcharts, meta);
-  createVolunteersDonut(gcharts, meta);
+  
+  if (meta.milestones.total > 0 && isLastestResultsPage())
+    createMilestonesDonut(gcharts, meta);
 
-  const g1 = createGroup(gcharts, 'g1');
-  createTopAgeGrade(g1, meta);
-  createAges(g1, meta);
-  createVolunteers(g1, meta);
+  createAgeGroupDonut(gcharts, meta);
+
+   if (meta.volunteerMeta.milestones.total > 0 && isLastestResultsPage())
+    createVolunteersDonut(gcharts, meta);
+
+   if (!isLastestResultsPage()) 
+    addMilestonesMissingText(gcharts);
 }
 
 
@@ -388,13 +391,8 @@ function extractMeta(finishers) {
   const meta = {};
   meta.genders = { male: 0, female: 0, unknown: 0 };
   meta.achievement = {};
-  meta.clubs = {};
   meta.ageGroups = {};
-  meta.positions = {};
   meta.runs = {};
-  meta.vols = {};
-  meta.ageGrades = {};
-  meta.ages = {};
   meta.first = { here: 0, anywhere: 0 };
   meta.pb = { male: 0, female: 0, unknown: 0 };
   meta.milestones = {};
@@ -402,6 +400,7 @@ function extractMeta(finishers) {
   meta.milestones.fiveK = { 10: [], 25: [], 50: [], 100: [], 250: [], 500: [], 1000: [] };
   meta.milestones.unofficial = { 150: [], 200: [], 300: [], 400: [], 600: [], 700: [], 800: [], 900: [] };
   meta.milestones.total = 0;
+  meta.ageGroup = { 10: 0, 1114: 0, 1517: 0, 1819: 0, 2024: 0, 2529: 0, 3034: 0, 3539: 0, 4044: 0, 4549: 0, 5054: 0, 5559: 0, 6064: 0, 6569: 0, 7074: 0, 7579: 0, 8084: 0, 8589: 0, 9094: 0, 9599: 0 };
 
   const genderTerms = {
     female: ["Female", "Kvinna", "Kvinde", "Kobieta", "Femme", "Frau", "Weiblich", "Naiset", "Vrouw", "Nainen", "Donna", "女子", "Kobieta", "Kvinne", "Moteris"],
@@ -435,7 +434,7 @@ function extractMeta(finishers) {
       // uk, at, de, nl, dk, fi, fr, jp, no, pl, se
 
       if (firstTimer.includes(finisher.achievement)) {
-        if (finisher.runs === '1') {
+        if (finisher.runs === '1' && isLastestResultsPage()) {
           meta.first.anywhere++;
         } else {
           meta.first.here++;
@@ -446,20 +445,13 @@ function extractMeta(finishers) {
         meta.pb[finisher.gender] = meta.pb[finisher.gender] + 1 ?? 1;
       }
     }
-    if (finisher.club) {
-      meta.clubs[finisher.club] = (meta.clubs[finisher.club] ?? 0) + 1;
-    }
     if (finisher.ageGroup) {
       meta.ageGroups[finisher.ageGroup] = (meta.ageGroups[finisher.ageGroup] ?? 0) + 1;
-    }
-    if (finisher.position) {
-      meta.positions[finisher.position] = (meta.positions[finisher.position] ?? 0) + 1;
-    }
-    if (finisher.ageGrade) {
-      meta.ageGrades[finisher.ageGrade] = (meta.ageGrades[finisher.ageGrade] ?? 0) + 1;
-    }
-    if (finisher.age) {
-      meta.ages[finisher.age] = (meta.ages[finisher.age] ?? 0) + 1;
+
+      const ageGroupKey = finisher.ageGroup.replace(/^[A-Z]+/, '').replace('-', '');
+      if (meta.ageGroup[ageGroupKey] !== undefined) {
+        meta.ageGroup[ageGroupKey]++;
+      }      
     }
     if (finisher.runs) {
       meta.milestones.official = isForJuniors()
@@ -562,6 +554,12 @@ function addLegendToKey(key, data) {
 
 function isForJuniors() {
   return window.location.href.includes('-juniors/');
+}
+
+function isLastestResultsPage() {
+  const url = String(window.location.href);
+  const isDateResultsPage = /\/results\/\d{4}-\d{2}-\d{2}\//.test(url);
+  return isDateResultsPage;
 }
 
 window.onload = delayedStart;
